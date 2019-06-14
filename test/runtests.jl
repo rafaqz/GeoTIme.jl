@@ -1,18 +1,12 @@
-if VERSION >= v"0.7.0-beta.0"
-    using Test
-else
-    using Base.Test
-end
-
-using NCDatasets
+using Test, GeoTime, Dates
 
 # reference value from Meeus, Jean (1998)
 # launch of Sputnik 1
 
-@test NCDatasets.datetuple_standard(2_436_116 - 2_400_001) == (1957, 10, 4)
-@test NCDatasets.datenum_gregjulian(1957,10,4,true) == 36115
+@test GeoTime.datetuple_standard(2_436_116 - 2_400_001) == (1957, 10, 4)
+@test GeoTime.datenum_gregjulian(1957,10,4,true) == 36115
 
-@test NCDatasets.datenum_gregjulian(333,1,27,false) == -557288
+@test GeoTime.datenum_gregjulian(333,1,27,false) == -557288
 
 
 function datenum_datetuple_all_calendars()
@@ -20,14 +14,14 @@ function datenum_datetuple_all_calendars()
     dayincrement = 11000
 
     for (tonum,totuple) in [
-        (NCDatasets.datenum_standard,NCDatasets.datetuple_standard),
-        (NCDatasets.datenum_julian,NCDatasets.datetuple_julian),
-        (NCDatasets.datenum_prolepticgregorian,NCDatasets.datetuple_prolepticgregorian),
-        (NCDatasets.datenum_allleap,NCDatasets.datetuple_allleap),
-        (NCDatasets.datenum_noleap,NCDatasets.datetuple_noleap),
-        (NCDatasets.datenum_360day,NCDatasets.datetuple_360day),
+        (GeoTime.datenum_standard, GeoTime.datetuple_standard),
+        (GeoTime.datenum_julian, GeoTime.datetuple_julian),
+        (GeoTime.datenum_prolepticgregorian, GeoTime.datetuple_prolepticgregorian),
+        (GeoTime.datenum_allleap, GeoTime.datetuple_allleap),
+        (GeoTime.datenum_noleap, GeoTime.datetuple_noleap),
+        (GeoTime.datenum_360day, GeoTime.datetuple_360day),
     ]
-        for Z = -2_400_000 + NCDatasets.DATENUM_OFFSET : dayincrement : 600_000 + NCDatasets.DATENUM_OFFSET
+        for Z = -2_400_000 + GeoTime.DATENUM_OFFSET : dayincrement : 600_000 + GeoTime.DATENUM_OFFSET
             y,m,d = totuple(Z)
             @test tonum(y,m,d) == Z
         end
@@ -87,7 +81,7 @@ function stresstest_DateTime(::Type{DT}) where DT
     for n = -800000:11:800000
         #@show n
         t = t0 + Dates.Day(n)
-        y, m, d, h, mi, s, ms = NCDatasets.datetuple(t)
+        y, m, d, h, mi, s, ms = GeoTime.datetuple(t)
         @test DT(y, m, d, h, mi, s, ms) == t
     end
 end
@@ -129,22 +123,22 @@ isempty(findfirst("Julian",String(take!(io)))) == false
 
 # time
 
-t0,plength = NCDatasets.timeunits("days since 1950-01-02T03:04:05Z")
+t0,plength = GeoTime.timeunits("days since 1950-01-02T03:04:05Z")
 @test t0 == DateTimeStandard(1950,1,2, 3,4,5)
 @test plength == 86400000
 
 
-t0,plength = NCDatasets.timeunits("days since -4713-01-01T00:00:00Z")
+t0,plength = GeoTime.timeunits("days since -4713-01-01T00:00:00Z")
 @test t0 == DateTimeStandard(-4713,1,1)
 @test plength == 86400000
 
 
-t0,plength = NCDatasets.timeunits("days since -4713-01-01")
+t0,plength = GeoTime.timeunits("days since -4713-01-01")
 @test t0 == DateTimeStandard(-4713,1,1)
 @test plength == 86400000
 
 
-t0,plength = NCDatasets.timeunits("days since 2000-01-01 0:0:0")
+t0,plength = GeoTime.timeunits("days since 2000-01-01 0:0:0")
 @test t0 == DateTimeStandard(2000,1,1)
 @test plength == 86400000
 
@@ -160,13 +154,13 @@ for (calendar,DT) in [
     ("366_day",DateTimeAllLeap),
     ("360_day",DateTime360Day)]
 
-    calendart0,calendarplength = NCDatasets.timeunits("days since 2000-1-1 0:0:0",calendar)
+    calendart0,calendarplength = GeoTime.timeunits("days since 2000-1-1 0:0:0",calendar)
     @test calendart0 == DT(2000,1,1)
     @test calendarplength == 86400000
 end
 
-@test_throws ErrorException NCDatasets.timeunits("fortnights since 2000-01-01")
-@test_throws ErrorException NCDatasets.timeunits("days since 2000-1-1 0:0:0","foo")
+@test_throws ErrorException GeoTime.timeunits("fortnights since 2000-01-01")
+@test_throws ErrorException GeoTime.timeunits("days since 2000-1-1 0:0:0","foo")
 
 # value from python's cftime
 # print(cftime.DatetimeJulian(-4713,1,1) + datetime.timedelta(2455512,.375 * 24*60*60))
@@ -253,11 +247,11 @@ Out[13]: cftime.DatetimeJulian(1582, 10, 5, 0, 0, 0, 0, -1, 1)
     (-4713, 1, 1, 12, 0, 0, 0)
 
 
-dt = NCDatasets.reinterpret(DateTimeStandard, DateTimeJulian(1900,2,28))
+dt = GeoTime.reinterpret(DateTimeStandard, DateTimeJulian(1900,2,28))
 @test typeof(dt) == DateTimeStandard
 @test datetuple(dt) == (1900,2,28,0, 0, 0, 0)
 
-dt = NCDatasets.reinterpret(DateTime, DateTimeNoLeap(1900,2,28))
+dt = GeoTime.reinterpret(DateTime, DateTimeNoLeap(1900,2,28))
 @test typeof(dt) == DateTime
 @test Dates.year(dt) == 1900
 @test Dates.month(dt) == 2
@@ -271,7 +265,7 @@ dt = NCDatasets.reinterpret(DateTime, DateTimeNoLeap(1900,2,28))
 @test DateTimeStandard(2000,01,03) > DateTimeStandard(2000,01,02)
 @test DateTimeStandard(2000,01,03) ≥ DateTimeStandard(2000,01,01)
 
-import NCDatasets: datetuple
+import GeoTime: datetuple
 datetuple(dt::DateTime) = (Dates.year(dt),Dates.month(dt),Dates.day(dt),
                            Dates.hour(dt),Dates.minute(dt),Dates.second(dt),
                            Dates.millisecond(dt))

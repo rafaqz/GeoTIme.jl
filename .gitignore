@@ -4,6 +4,7 @@
 *.bak
 *.nc
 *~
+/Manifest.toml
 /deps/deps.jl
 /lcov.info
 /notes.txt
